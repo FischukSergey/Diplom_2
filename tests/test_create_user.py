@@ -1,4 +1,5 @@
 import allure
+import pytest
 from helpers.api_client import StellarBurgersAPI
 from helpers.api_data import (
     HTTP_OK,
@@ -83,68 +84,34 @@ class TestCreateUser:
         ), f"Ожидалось сообщение '{ERROR_USER_ALREADY_EXISTS}', получено {response_data.get(KEY_MESSAGE)}"
 
     @allure.story("Создание пользователя без обязательных полей")
-    @allure.title("Тест создания пользователя без email")
-    def test_create_user_without_email(self, user_credentials):
-        """Проверка невозможности создания пользователя без email"""
+    @pytest.mark.parametrize(
+        "missing_field,field_name",
+        [
+            ("email", "email"),
+            ("password", "password"),
+            ("name", "name"),
+        ],
+    )
+    def test_create_user_without_required_field(
+        self, user_credentials, missing_field, field_name
+    ):
+        """Проверка невозможности создания пользователя без обязательного поля"""
         api_client = StellarBurgersAPI()
 
-        response = api_client.create_user(
-            email=None,
-            password=user_credentials["password"],
-            name=user_credentials["name"],
-        )
+        # Подготавливаем данные, устанавливая нужное поле в None
+        user_data = {
+            "email": user_credentials["email"],
+            "password": user_credentials["password"],
+            "name": user_credentials["name"],
+        }
+        user_data[missing_field] = None
 
-        # Проверяем код ответа
-        assert (
-            response.status_code == HTTP_FORBIDDEN
-        ), f"Ожидался код {HTTP_FORBIDDEN}, получен {response.status_code}"
-
-        # Проверяем тело ответа
-        response_data = response.json()
-        assert (
-            response_data.get(KEY_SUCCESS) is False
-        ), f"Поле {KEY_SUCCESS} должно быть False"
-        assert (
-            response_data.get(KEY_MESSAGE) == ERROR_REQUIRED_FIELDS
-        ), f"Ожидалось сообщение '{ERROR_REQUIRED_FIELDS}', получено {response_data.get(KEY_MESSAGE)}"
-
-    @allure.story("Создание пользователя без обязательных полей")
-    @allure.title("Тест создания пользователя без password")
-    def test_create_user_without_password(self, user_credentials):
-        """Проверка невозможности создания пользователя без password"""
-        api_client = StellarBurgersAPI()
-
-        response = api_client.create_user(
-            email=user_credentials["email"],
-            password=None,
-            name=user_credentials["name"],
-        )
-
-        # Проверяем код ответа
-        assert (
-            response.status_code == HTTP_FORBIDDEN
-        ), f"Ожидался код {HTTP_FORBIDDEN}, получен {response.status_code}"
-
-        # Проверяем тело ответа
-        response_data = response.json()
-        assert (
-            response_data.get(KEY_SUCCESS) is False
-        ), f"Поле {KEY_SUCCESS} должно быть False"
-        assert (
-            response_data.get(KEY_MESSAGE) == ERROR_REQUIRED_FIELDS
-        ), f"Ожидалось сообщение '{ERROR_REQUIRED_FIELDS}', получено {response_data.get(KEY_MESSAGE)}"
-
-    @allure.story("Создание пользователя без обязательных полей")
-    @allure.title("Тест создания пользователя без name")
-    def test_create_user_without_name(self, user_credentials):
-        """Проверка невозможности создания пользователя без name"""
-        api_client = StellarBurgersAPI()
-
-        response = api_client.create_user(
-            email=user_credentials["email"],
-            password=user_credentials["password"],
-            name=None,
-        )
+        with allure.step(f"Попытка создания пользователя без поля {field_name}"):
+            response = api_client.create_user(
+                email=user_data["email"],
+                password=user_data["password"],
+                name=user_data["name"],
+            )
 
         # Проверяем код ответа
         assert (

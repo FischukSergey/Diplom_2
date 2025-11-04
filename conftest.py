@@ -1,7 +1,11 @@
+import logging
 import pytest
 from helpers.api_client import StellarBurgersAPI
 from helpers.data_generator import generate_user_data
 from helpers.api_data import HTTP_OK, KEY_ACCESS_TOKEN, KEY_DATA
+
+# Настройка логирования
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -30,9 +34,11 @@ def user_cleanup_list():
                 access_token = login_response.json().get(KEY_ACCESS_TOKEN)
                 if access_token:
                     api_client.delete_user(access_token)
-        except Exception:
-            # Игнорируем ошибки при cleanup (пользователь может не существовать)
-            pass
+        except Exception as e:
+            # Логируем ошибки при cleanup, но не роняем тест
+            logger.warning(
+                f"Не удалось удалить пользователя {user_data.get('email')}: {e}"
+            )
 
 
 @pytest.fixture
@@ -47,10 +53,12 @@ def created_user(user_credentials, user_cleanup_list):
         name=user_credentials["name"],
     )
 
-    # Проверяем успешность создания
-    assert (
-        response.status_code == HTTP_OK
-    ), f"Не удалось создать пользователя: {response.text}"
+    # Проверяем успешность создания (pre-condition)
+    if response.status_code != HTTP_OK:
+        pytest.fail(
+            f"Не удалось создать пользователя в pre-condition. "
+            f"Код: {response.status_code}, Ответ: {response.text}"
+        )
 
     # Регистрируем пользователя для удаления после теста
     user_cleanup_list.append(user_credentials)
@@ -58,6 +66,9 @@ def created_user(user_credentials, user_cleanup_list):
     # Получаем токен из ответа
     response_data = response.json()
     access_token = response_data.get(KEY_ACCESS_TOKEN)
+
+    if not access_token:
+        pytest.fail(f"Не получен accessToken в pre-condition. Ответ: {response_data}")
 
     # Передаём данные пользователя в тест
     yield {
@@ -69,21 +80,22 @@ def created_user(user_credentials, user_cleanup_list):
 
 
 @pytest.fixture
-def user_with_token(created_user):
-    """Фикстура для авторизованного пользователя с токеном"""
-    # created_user уже содержит токен и все данные
-    return created_user
-
-
-@pytest.fixture
 def ingredients_list():
     """Фикстура для получения списка доступных ингредиентов"""
     api_client = StellarBurgersAPI()
     response = api_client.get_ingredients()
 
-    assert response.status_code == HTTP_OK, "Не удалось получить список ингредиентов"
+    # Проверяем успешность получения ингредиентов (pre-condition)
+    if response.status_code != HTTP_OK:
+        pytest.fail(
+            f"Не удалось получить список ингредиентов в pre-condition. "
+            f"Код: {response.status_code}, Ответ: {response.text}"
+        )
 
     ingredients_data = response.json().get(KEY_DATA, [])
+
+    if not ingredients_data:
+        pytest.fail("Список ингредиентов пуст в pre-condition")
 
     # Возвращаем список ID ингредиентов
     return [ingredient["_id"] for ingredient in ingredients_data]

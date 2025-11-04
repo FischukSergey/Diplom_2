@@ -1,25 +1,21 @@
 import requests
 import allure
 from helpers.urls import (
-    BASE_URL,
-    USER_REGISTER,
-    USER_LOGIN,
-    USER_DELETE,
-    INGREDIENTS,
-    ORDERS,
+    USER_REGISTER_URL,
+    USER_LOGIN_URL,
+    USER_DELETE_URL,
+    INGREDIENTS_URL,
+    ORDERS_URL,
 )
 
 
 class StellarBurgersAPI:
     """Класс для работы с API Stellar Burgers"""
 
-    def __init__(self):
-        self.base_url = BASE_URL
-
     @allure.step("Создание пользователя с email {email}")
     def create_user(self, email=None, password=None, name=None):
         """Создать пользователя"""
-        url = f"{self.base_url}{USER_REGISTER}"
+        url = USER_REGISTER_URL
         payload = {}
 
         if email is not None:
@@ -35,7 +31,7 @@ class StellarBurgersAPI:
     @allure.step("Логин пользователя с email {email}")
     def login_user(self, email=None, password=None):
         """Авторизовать пользователя"""
-        url = f"{self.base_url}{USER_LOGIN}"
+        url = USER_LOGIN_URL
         payload = {}
 
         if email is not None:
@@ -49,7 +45,7 @@ class StellarBurgersAPI:
     @allure.step("Удаление пользователя")
     def delete_user(self, access_token):
         """Удалить пользователя (требуется токен авторизации)"""
-        url = f"{self.base_url}{USER_DELETE}"
+        url = USER_DELETE_URL
         headers = {"Authorization": access_token}
         response = requests.delete(url, headers=headers)
         return response
@@ -57,14 +53,14 @@ class StellarBurgersAPI:
     @allure.step("Получение списка ингредиентов")
     def get_ingredients(self):
         """Получить список доступных ингредиентов"""
-        url = f"{self.base_url}{INGREDIENTS}"
+        url = INGREDIENTS_URL
         response = requests.get(url)
         return response
 
     @allure.step("Создание заказа")
     def create_order(self, ingredients=None, access_token=None):
         """Создать заказ"""
-        url = f"{self.base_url}{ORDERS}"
+        url = ORDERS_URL
         payload = {}
 
         if ingredients is not None:

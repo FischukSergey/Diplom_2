@@ -17,7 +17,7 @@ class TestCreateOrder:
     @allure.story("Создание заказа с авторизацией")
     @allure.title("Тест создания заказа с авторизацией и ингредиентами")
     def test_create_order_with_auth_and_ingredients(
-        self, user_with_token, ingredients_list
+        self, created_user, ingredients_list
     ):
         """Проверка успешного создания заказа с авторизацией и ингредиентами"""
         api_client = StellarBurgersAPI()
@@ -27,7 +27,7 @@ class TestCreateOrder:
 
         response = api_client.create_order(
             ingredients=selected_ingredients,
-            access_token=user_with_token["access_token"],
+            access_token=created_user["access_token"],
         )
 
         # Проверяем код ответа
@@ -81,13 +81,13 @@ class TestCreateOrder:
 
     @allure.story("Создание заказа без ингредиентов")
     @allure.title("Тест создания заказа с авторизацией, но без ингредиентов")
-    def test_create_order_with_auth_without_ingredients(self, user_with_token):
+    def test_create_order_with_auth_without_ingredients(self, created_user):
         """Проверка невозможности создания заказа без ингредиентов с авторизацией"""
         api_client = StellarBurgersAPI()
 
         response = api_client.create_order(
             ingredients=[],
-            access_token=user_with_token["access_token"],
+            access_token=created_user["access_token"],
         )
 
         # Проверяем код ответа
@@ -131,7 +131,7 @@ class TestCreateOrder:
 
     @allure.story("Создание заказа с неверными данными")
     @allure.title("Тест создания заказа с неверным хешем ингредиентов")
-    def test_create_order_with_invalid_ingredients_hash(self, user_with_token):
+    def test_create_order_with_invalid_ingredients_hash(self, created_user):
         """Проверка обработки запроса с неверным хешем ингредиентов"""
         api_client = StellarBurgersAPI()
 
@@ -140,7 +140,7 @@ class TestCreateOrder:
 
         response = api_client.create_order(
             ingredients=invalid_ingredients,
-            access_token=user_with_token["access_token"],
+            access_token=created_user["access_token"],
         )
 
         # Проверяем код ответа
